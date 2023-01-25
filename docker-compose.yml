@@ -1,0 +1,30 @@
+version: '3.9'
+services:
+
+  mariadb:
+    image: mariadb
+    volumes:
+      - ./mysqldb:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_pass
+      - MYSQL_DATABASE=pdns_db
+      - MYSQL_USER=pdns_user
+      - MYSQL_PASSWORD=pdns_pass
+
+  powerdns:
+    image: powerdns:latest
+    environment:
+      - POWERDNS_SERVER_ID=serverid
+      - POWERDNS_WEBSERVER_ALLOW_FROM=0.0.0.0/0
+      - MYSQL_HOST=mariadb
+      - MYSQL_PORT=3306
+      - MYSQL_USER=pdns_user
+      - MYSQL_PASSWORD=pdns_pass
+      - MYSQL_DATABASE=pdns_db
+    depends_on:
+      - mariadb
+    ports:
+      - 8080:8080/TCP
+      - 8081:8081/TCP
+      - 8053:53/TCP
+      - 8053:53/UDP

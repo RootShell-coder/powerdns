@@ -1,0 +1,7 @@
+[program:nginx]
+command = /usr/sbin/nginx
+
+autorestart = true
+
+stderr_logfile = NONE
+stdout_logfile = NONE
