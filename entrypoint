@@ -1,0 +1,54 @@
+#!/bin/sh
+
+# Setup run directory
+if [ ! -d /run/powerdns ]; then
+	mkdir -p /run/powerdns
+fi
+chown -R powerdns:powerdns /run/powerdns
+chmod 0755 /run/powerdns
+
+
+#Setup mysql env
+
+if [ -n "$MYSQL_HOST" ]; then
+    sed -i "s!MYSQL_HOST!${MYSQL_HOST}!" /etc/powerdns/conf.d/gmysql.conf
+fi
+if [ -n "$MYSQL_PORT" ]; then
+    sed -i "s!MYSQL_PORT!${MYSQL_PORT}!" /etc/powerdns/conf.d/gmysql.conf
+fi
+if [ -n "$MYSQL_DATABASE" ]; then
+    sed -i "s!MYSQL_DATABASE!${MYSQL_DATABASE}!" /etc/powerdns/conf.d/gmysql.conf
+fi
+if [ -n "$MYSQL_USER" ]; then
+    sed -i "s!MYSQL_USER!${MYSQL_USER}!" /etc/powerdns/conf.d/gmysql.conf
+fi
+if [ -n "$MYSQL_PASSWORD" ]; then
+    sed -i "s!MYSQL_PASSWORD!${MYSQL_PASSWORD}!" /etc/powerdns/conf.d/gmysql.conf
+fi
+
+# Setup web access
+if [ ! -f /etc/powerdns/conf.d/webserver.conf ] && [ -n "$POWERDNS_WEBSERVER_ALLOW_FROM" ]; then
+	# Check if we got a password
+	if [ -z "$POWERDNS_WEBSERVER_PASSWORD" ]; then
+		POWERDNS_WEBSERVER_PASSWORD=$(pwgen 16 1)
+		fdc_notice "PowerDNS webserver password: $POWERDNS_WEBSERVER_PASSWORD"
+	fi
+	# Check if we got a API key
+	if [ -z "$POWERDNS_API_KEY" ]; then
+		POWERDNS_API_KEY=$(pwgen 16 1)
+		fdc_notice "PowerDNS webserver API key: $POWERDNS_API_KEY"
+	fi
+
+	cat <<EOF > /etc/powerdns/conf.d/webserver.conf
+webserver = yes
+webserver-address = 0.0.0.0
+webserver-allow-from = $POWERDNS_WEBSERVER_ALLOW_FROM
+webserver-loglevel = normal
+webserver-password = $POWERDNS_WEBSERVER_PASSWORD
+webserver-port=8081
+api = yes
+api-key = $POWERDNS_API_KEY
+EOF
+fi
+
+exec "$@"

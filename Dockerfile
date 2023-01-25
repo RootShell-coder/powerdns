@@ -84,15 +84,22 @@ FROM alpine:3.17.1
 
 ENV POWERADMIN_VER=3.4.2
 
+ENV TZ=Europe/Moscow
+ENV LANG ru_RU.UTF-8
+ENV LANGUAGE ru_RU.UTF-8
+ENV LC_ALL ru_RU.UTF-8
+ENV MUSL_LOCPATH /usr/share/i18n/locales/musl
+
 # Copy in built binaries
 COPY --from=builder /build/powerdns-root /
 
 # Copy configs
 COPY supervisor /etc/supervisor
 COPY powerdns /etc/powerdns
+COPY entrypoint /usr/bin
 
 RUN set -eux; \
-	true "PowerDNS requirements"; \
+	true "PowerDNS and PowerAdmin requirements"; \
 	apk add --no-cache \
 		boost-libs \
 		geoip \
@@ -114,6 +121,7 @@ RUN set -eux; \
 		php81-pdo_mysql \
 		php81-gettext \
 		php81-openssl \
+		musl musl-utils musl-locales tzdata \
 		; \
 	true "Setup user and group"; \
 	addgroup -S powerdns 2>/dev/null; \
@@ -136,61 +144,14 @@ RUN set -eux; \
 	mv poweradmin-${POWERADMIN_VER} poweradmin; \
 	rm -R /var/www/html/poweradmin/install; \
 	\
-	mkdir /run/powerdns; \
+	true "Flexible Docker Containers"; \
 	chmod 0750 /etc/powerdns; \
   	chmod 0640 /etc/powerdns/pdns.conf; \
   	chown -R root:powerdns /etc/powerdns; \
-	chown -R powerdns:powerdns /run/powerdns
+	chmod +x /usr/bin/entrypoint; \
+	 \
+	cp /usr/share/zoneinfo/${TZ} /etc/localtime
 
 EXPOSE 53/TCP 53/UDP 8081/TCP 80/TCP
+ENTRYPOINT [ "entrypoint" ]
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]
-
-
-	#&& git clone https://github.com/poweradmin/poweradmin.git . \
-	#&& git checkout b27f28b2d586afb201904437605be988ee048c22 \
-
-
-# RUN set -eux; \
-# 	true "Setup configuration"; \
-# 	mkdir -p /etc/powerdns/conf.d; \
-# 	sed -ri "s!^#?\s*(disable-syslog)\s*=\s*\S*.*!\1 = yes!" /etc/powerdns/pdns.conf; \
-# 	grep -E "^disable-syslog = yes$" /etc/powerdns/pdns.conf; \
-# 	sed -ri "s!^#?\s*(log-timestamp)\s*=\s*\S*.*!\1 = yes!" /etc/powerdns/pdns.conf; \
-# 	grep -E "^log-timestamp = yes$" /etc/powerdns/pdns.conf; \
-# 	sed -ri "s!^#?\s*(include-dir)\s*=\s*\S*.*!\1 = /etc/powerdns/conf.d!" /etc/powerdns/pdns.conf; \
-# 	grep -E "^include-dir = /etc/powerdns/conf\.d$" /etc/powerdns/pdns.conf; \
-# 	sed -ri "s!^#?\s*(launch)\s*=\s*\S*.*!\1 =!" /etc/powerdns/pdns.conf; \
-# 	grep -E "^launch =$" /etc/powerdns/pdns.conf; \
-# 	sed -ri "s!^#?\s*(socket-dir)\s*=\s*\S*.*!\1 = /run/powerdns!" /etc/powerdns/pdns.conf; \
-# 	grep -E "^socket-dir = /run/powerdns$" /etc/powerdns/pdns.conf; \
-# 	sed -ri "s!^#?\s*(version-string)\s*=\s*\S*.*!\1 = anonymous!" /etc/powerdns/pdns.conf; \
-# 	grep -E "^version-string = anonymous$" /etc/powerdns/pdns.conf; \
-# 	chmod 0750 /etc/powerdns; \
-# 	chmod 0640 /etc/powerdns/pdns.conf; \
-# 	chown -R root:powerdns /etc/powerdns
-
-
-# PowerDNS
-
-
-# COPY usr/local/share/flexible-docker-containers/init.d/42-powerdns.sh /usr/local/share/flexible-docker-containers/init.d
-# COPY usr/local/share/flexible-docker-containers/pre-init-tests.d/42-powerdns.sh /usr/local/share/flexible-docker-containers/pre-init-tests.d
-# COPY usr/local/share/flexible-docker-containers/pre-init-tests.d/43-powerdns-mysql.sh /usr/local/share/flexible-docker-containers/pre-init-tests.d
-# COPY usr/local/share/flexible-docker-containers/pre-init-tests.d/43-powerdns-postgres.sh /usr/local/share/flexible-docker-containers/pre-init-tests.d
-# COPY usr/local/share/flexible-docker-containers/pre-init-tests.d/43-powerdns-zonefile.sh /usr/local/share/flexible-docker-containers/pre-init-tests.d
-# COPY usr/local/share/flexible-docker-containers/tests.d/42-powerdns-mysql.sh /usr/local/share/flexible-docker-containers/tests.d
-# COPY usr/local/share/flexible-docker-containers/tests.d/42-powerdns-postgres.sh /usr/local/share/flexible-docker-containers/tests.d
-# COPY usr/local/share/flexible-docker-containers/tests.d/43-powerdns.sh /usr/local/share/flexible-docker-containers/tests.d
-# COPY usr/local/share/flexible-docker-containers/tests.d/99-powerdns.sh /usr/local/share/flexible-docker-containers/tests.d
-# COPY usr/local/share/flexible-docker-containers/healthcheck.d/42-powerdns.sh /usr/local/share/flexible-docker-containers/healthcheck.d
-# RUN set -eux; \
-# 	true "Flexible Docker Containers"; \
-# 	if [ -n "$VERSION_INFO" ]; then echo "$VERSION_INFO" >> /.VERSION_INFO; fi; \
-# 	true "Permissions"; \
-# 	chown root:root \
-# 		/etc/supervisor/conf.d/powerdns.conf; \
-# 	chmod 0644 \
-# 		/etc/supervisor/conf.d/powerdns.conf; \
-# 	fdc set-perms
-
-
