@@ -90,14 +90,6 @@ ENV LANGUAGE ru_RU.UTF-8
 ENV LC_ALL ru_RU.UTF-8
 ENV MUSL_LOCPATH /usr/share/i18n/locales/musl
 
-# Copy in built binaries
-COPY --from=builder /build/powerdns-root /
-
-# Copy configs
-COPY supervisor /etc/supervisor
-COPY powerdns /etc/powerdns
-COPY entrypoint /usr/bin
-
 RUN set -eux; \
 	true "PowerDNS and PowerAdmin requirements"; \
 	apk add --no-cache \
@@ -114,9 +106,10 @@ RUN set -eux; \
         pwgen \
 		supervisor \
 		nginx \
-		php-fpm \
+		php81 \
+		php81-fpm \
 		#php-mcrypt \
-		php-mysqlnd \
+		php81-mysqlnd \
 		php81-pdo \
 		php81-pdo_mysql \
 		php81-gettext \
@@ -133,6 +126,24 @@ RUN set -eux; \
 		; \
 	true "Cleanup"; \
 	rm -f /var/cache/apk/*
+
+# Copy in built binaries
+COPY --from=builder /build/powerdns-root /
+
+# Copy configs
+COPY supervisor /etc/supervisor
+COPY powerdns /etc/powerdns
+COPY entrypoint /usr/bin
+
+#nginx
+#COPY nginx/nginx.conf /etc/nginx/nginx.conf
+#COPY nginx/vhost.conf /etc/nginx/sites-enabled/vhost.conf
+#COPY nginx/fastcgi_params /etc/nginx/fastcgi_params
+
+#php
+#COPY php/php.ini /etc/php81/php.ini
+#COPY php/php-cli.ini /etc/php/7.0/cli/php.ini
+
 
 RUN set -eux; \
  	true "Setup poweradmin"; \

@@ -24,7 +24,7 @@ services:
     depends_on:
       - mariadb
     ports:
-      - 8080:8080/TCP
+      - 80:80/TCP
       - 8081:8081/TCP
       - 8053:53/TCP
       - 8053:53/UDP
