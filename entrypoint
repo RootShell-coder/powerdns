@@ -7,24 +7,31 @@ fi
 chown -R powerdns:powerdns /run/powerdns
 chmod 0755 /run/powerdns
 
-
 #Setup mysql env
 
 if [ -n "$MYSQL_HOST" ]; then
     sed -i "s!MYSQL_HOST!${MYSQL_HOST}!" /etc/powerdns/conf.d/gmysql.conf
+	sed -i "s!{{MYSQL_HOST}}!${MYSQL_HOST}!" /var/www/html/poweradmin/config.inc.php
 fi
 if [ -n "$MYSQL_PORT" ]; then
     sed -i "s!MYSQL_PORT!${MYSQL_PORT}!" /etc/powerdns/conf.d/gmysql.conf
+	sed -i "s!{{MYSQL_PORT}}!${MYSQL_PORT}!" /var/www/html/poweradmin/config.inc.php
 fi
 if [ -n "$MYSQL_DATABASE" ]; then
     sed -i "s!MYSQL_DATABASE!${MYSQL_DATABASE}!" /etc/powerdns/conf.d/gmysql.conf
+	sed -i "s!{{MYSQL_DB}}!${MYSQL_DATABASE}!" /var/www/html/poweradmin/config.inc.php
 fi
 if [ -n "$MYSQL_USER" ]; then
     sed -i "s!MYSQL_USER!${MYSQL_USER}!" /etc/powerdns/conf.d/gmysql.conf
+	sed -i "s!{{MYSQL_USER}}!${MYSQL_USER}!" /var/www/html/poweradmin/config.inc.php
 fi
 if [ -n "$MYSQL_PASSWORD" ]; then
     sed -i "s!MYSQL_PASSWORD!${MYSQL_PASSWORD}!" /etc/powerdns/conf.d/gmysql.conf
+	sed -i "s!{{MYSQL_PASSWORD}}!${MYSQL_PASSWORD}!" /var/www/html/poweradmin/config.inc.php
 fi
+
+	SESSION_KEY=`pwgen 32 1`
+	sed -i "s!{{SESSION_KEY}}!${SESSION_KEY}!" /var/www/html/poweradmin/config.inc.php
 
 # Setup web access
 if [ ! -f /etc/powerdns/conf.d/webserver.conf ] && [ -n "$POWERDNS_WEBSERVER_ALLOW_FROM" ]; then

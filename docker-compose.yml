@@ -13,8 +13,6 @@ services:
 
   powerdns:
     image: powerdns:latest
-    volumes:
-      - ./nginx:/etc/nginx
     environment:
       - POWERDNS_SERVER_ID=serverid
       - POWERDNS_WEBSERVER_ALLOW_FROM=0.0.0.0/0

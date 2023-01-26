@@ -109,11 +109,15 @@ RUN set -eux; \
 		php81 \
 		php81-fpm \
 		#php-mcrypt \
+		php81-intl \
+		php81-iconv \
 		php81-mysqlnd \
 		php81-pdo \
 		php81-pdo_mysql \
 		php81-gettext \
 		php81-openssl \
+		php81-session \
+		php81-tokenizer \
 		musl musl-utils musl-locales tzdata \
 		; \
 	true "Setup user and group"; \
@@ -127,41 +131,29 @@ RUN set -eux; \
 	true "Cleanup"; \
 	rm -f /var/cache/apk/*
 
-# Copy in built binaries
 COPY --from=builder /build/powerdns-root /
-
-# Copy configs
 COPY supervisor /etc/supervisor
 COPY powerdns /etc/powerdns
 COPY entrypoint /usr/bin
-
-#nginx
 COPY nginx /etc/nginx
-#COPY nginx/vhost.conf /etc/nginx/sites-enabled/vhost.conf
-#COPY nginx/fastcgi_params /etc/nginx/fastcgi_params
-
-#php
 COPY php81 /etc/php81
-#COPY php/php-cli.ini /etc/php/7.0/cli/php.ini
-
 
 RUN set -eux; \
- 	true "Setup poweradmin"; \
 	mkdir -p /var/www/html; \
 	cd /var/www/html; \
-	rm -rf /var/www/html/*; \
 	wget https://github.com/poweradmin/poweradmin/archive/refs/tags/v${POWERADMIN_VER}.tar.gz; \
 	tar -xf v${POWERADMIN_VER}.tar.gz && rm -f v${POWERADMIN_VER}.tar.gz; \
 	mv poweradmin-${POWERADMIN_VER} poweradmin; \
-	rm -R /var/www/html/poweradmin/install; \
+	rm -rf /var/www/html/poweradmin/install/; \
 	\
-	true "Flexible Docker Containers"; \
 	chmod 0750 /etc/powerdns; \
   	chmod 0640 /etc/powerdns/pdns.conf; \
   	chown -R root:powerdns /etc/powerdns; \
+	chown -R nginx:nginx /var/www/html; \
 	chmod +x /usr/bin/entrypoint; \
-	 \
 	cp /usr/share/zoneinfo/${TZ} /etc/localtime
+
+COPY poweradmin /var/www/html/poweradmin
 
 EXPOSE 53/TCP 53/UDP 8081/TCP 80/TCP
 ENTRYPOINT [ "entrypoint" ]
