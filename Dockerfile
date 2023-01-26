@@ -136,12 +136,12 @@ COPY powerdns /etc/powerdns
 COPY entrypoint /usr/bin
 
 #nginx
-#COPY nginx/nginx.conf /etc/nginx/nginx.conf
+COPY nginx /etc/nginx
 #COPY nginx/vhost.conf /etc/nginx/sites-enabled/vhost.conf
 #COPY nginx/fastcgi_params /etc/nginx/fastcgi_params
 
 #php
-#COPY php/php.ini /etc/php81/php.ini
+COPY php81 /etc/php81
 #COPY php/php-cli.ini /etc/php/7.0/cli/php.ini
 
 
