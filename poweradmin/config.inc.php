@@ -16,7 +16,7 @@ $dns_ns2 = '8.8.4.4';
 
 $timezone = 'Europe/Moscow';
 
-$pdnssec_use = false;
+$pdnssec_use = true;
 $pdnssec_debug = false;
 $pdnssec_command = '/usr/bin/pdnsutil';
 

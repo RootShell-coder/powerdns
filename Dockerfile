@@ -102,6 +102,7 @@ RUN set -eux; \
 		mariadb-connector-c \
 		yaml-cpp \
 		zeromq \
+		openssl \
 		\
         pwgen \
 		supervisor \
@@ -118,6 +119,9 @@ RUN set -eux; \
 		php81-openssl \
 		php81-session \
 		php81-tokenizer \
+		php81-mbstring \
+		php81-xml \
+		composer \
 		musl musl-utils musl-locales tzdata \
 		; \
 	true "Setup user and group"; \
@@ -131,21 +135,23 @@ RUN set -eux; \
 	true "Cleanup"; \
 	rm -f /var/cache/apk/*
 
-COPY --from=builder /build/powerdns-root /
-COPY supervisor /etc/supervisor
-COPY powerdns /etc/powerdns
-COPY entrypoint /usr/bin
-COPY nginx /etc/nginx
-COPY php81 /etc/php81
-
 RUN set -eux; \
 	mkdir -p /var/www/html; \
 	cd /var/www/html; \
 	wget https://github.com/poweradmin/poweradmin/archive/refs/tags/v${POWERADMIN_VER}.tar.gz; \
 	tar -xf v${POWERADMIN_VER}.tar.gz && rm -f v${POWERADMIN_VER}.tar.gz; \
 	mv poweradmin-${POWERADMIN_VER} poweradmin; \
-	rm -rf /var/www/html/poweradmin/install/; \
-	\
+	rm -rf /var/www/html/poweradmin/install/
+
+COPY --from=builder /build/powerdns-root /
+COPY supervisor /etc/supervisor
+COPY powerdns /etc/powerdns
+COPY entrypoint /usr/bin
+COPY nginx /etc/nginx
+COPY php81 /etc/php81
+COPY poweradmin /var/www/html/poweradmin/inc
+
+RUN set -eux; \
 	chmod 0750 /etc/powerdns; \
   	chmod 0640 /etc/powerdns/pdns.conf; \
   	chown -R root:powerdns /etc/powerdns; \
@@ -153,8 +159,8 @@ RUN set -eux; \
 	chmod +x /usr/bin/entrypoint; \
 	cp /usr/share/zoneinfo/${TZ} /etc/localtime
 
-COPY poweradmin /var/www/html/poweradmin
+EXPOSE 53 8081 80
+EXPOSE 53/UDP
 
-EXPOSE 53/TCP 53/UDP 8081/TCP 80/TCP
 ENTRYPOINT [ "entrypoint" ]
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]
