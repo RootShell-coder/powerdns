@@ -109,7 +109,6 @@ RUN set -eux; \
 		nginx \
 		php81 \
 		php81-fpm \
-		#php-mcrypt \
 		php81-intl \
 		php81-iconv \
 		php81-mysqlnd \
@@ -121,19 +120,11 @@ RUN set -eux; \
 		php81-tokenizer \
 		php81-mbstring \
 		php81-xml \
-		composer \
-		musl musl-utils musl-locales tzdata \
-		; \
-	true "Setup user and group"; \
-	addgroup -S powerdns 2>/dev/null; \
-	adduser -S -D -h /var/lib/powerdns -s /sbin/nologin -G powerdns -g powerdns powerdns 2>/dev/null; \
-	\
-	true "Tools"; \
-	apk add --no-cache \
-		bind-tools \
-		; \
-	true "Cleanup"; \
-	rm -f /var/cache/apk/*
+		\
+		composer musl musl-utils musl-locales tzdata \
+		#bind-tools; \
+	rm -f /var/cache/apk/*; \
+	rm -rf /var/www/localhost
 
 RUN set -eux; \
 	mkdir -p /var/www/html; \
@@ -150,14 +141,21 @@ COPY entrypoint /usr/bin
 COPY nginx /etc/nginx
 COPY php81 /etc/php81
 COPY poweradmin /var/www/html/poweradmin/inc
+COPY sql /sql
+
 
 RUN set -eux; \
+	addgroup -S powerdns 2>/dev/null; \
+	adduser -S -D -h /var/lib/powerdns -s /sbin/nologin -G powerdns -g powerdns powerdns 2>/dev/null; \
+	cp /usr/share/zoneinfo/${TZ} /etc/localtime; \
+	chmod +x /usr/bin/entrypoint; \
+	mkdir -p /run/powerdns; \
 	chmod 0750 /etc/powerdns; \
   	chmod 0640 /etc/powerdns/pdns.conf; \
+	chmod 0755 /run/powerdns; \
   	chown -R root:powerdns /etc/powerdns; \
 	chown -R nginx:nginx /var/www/html; \
-	chmod +x /usr/bin/entrypoint; \
-	cp /usr/share/zoneinfo/${TZ} /etc/localtime
+	chown -R powerdns:powerdns /run/powerdns
 
 EXPOSE 53 8081 80
 EXPOSE 53/UDP

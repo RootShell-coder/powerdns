@@ -1,10 +1,27 @@
 version: '3.9'
+
+networks:
+  powerdns:
+    name: powerdns
+    driver: bridge
+#    driver_opts:
+#     com.docker.network.enable_ipv6: "true"
+#    ipam:
+#      driver: default
+#      config:
+#        - subnet: 172.16.238.0/24
+#          gateway: 172.16.238.1
+#        - subnet: "2001:3984:3989::/64"
+#          gateway: "2001:3984:3989::1"
+
 services:
 
   mariadb:
     image: mariadb
     volumes:
       - ./mysqldb:/var/lib/mysql
+    networks:
+      - powerdns
     environment:
       - MYSQL_ROOT_PASSWORD=root_pass
       - MYSQL_DATABASE=pdns_db
@@ -13,14 +30,27 @@ services:
 
   powerdns:
     image: powerdns:latest
+    networks:
+      - powerdns
     environment:
-      - POWERDNS_SERVER_ID=serverid
-      - POWERDNS_WEBSERVER_ALLOW_FROM=0.0.0.0/0
       - MYSQL_HOST=mariadb
-      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=pdns_db
       - MYSQL_USER=pdns_user
       - MYSQL_PASSWORD=pdns_pass
-      - MYSQL_DATABASE=pdns_db
+
+      - PDNS_ALLOW_AXFR_IPS=127.0.0.1
+      - PDNS_MASTER=yes
+      - PDNS_SLAVE=no
+      - PDNS_CACHE_TTL=20
+      - PDNS_DISTRIBUTOR_THREADS=3
+      - PDNS_RECURSIVE_CACHE_TTL=10
+      - PDNS_ALLOW_RECURSION=127.0.0.1
+      - PDNS_RECURSOR=no
+
+      - POWERADMIN_HOSTMASTER=admin@adm.net
+      - POWERADMIN_IFACE_LANG=ru_RU
+      - POWERADMIN_NS1=8.8.8.8
+      - POWERADMIN_NS2=8.8.4.4
     depends_on:
       - mariadb
     ports:

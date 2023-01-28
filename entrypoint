@@ -1,16 +1,18 @@
 #!/bin/sh
 
-#Defaults
-# mysql
+TZ=${TZ:-Europe/Moscow}
+
 MYSQL_HOST=${MYSQL_HOST:-localhost}
 MYSQL_PORT=${MYSQL_PORT:-3306}
 MYSQL_DATABASE=${MYSQL_DATABASE:-pdns}
 MYSQL_USER=${MYSQL_USER:-pdns}
 MYSQL_PASSWORD=${MYSQL_PASSWORD:-pdns}
 
-#php
-SESSION_KEY=`pwgen 32 1`
-
+POWERADMIN_IFACE_LANG=${POWERADMIN_IFACE_LANG:-en_EN}
+POWERADMIN_HOSTMASTER=${POWERADMIN_HOSTMASTER:-}
+POWERADMIN_NS1=${POWERADMIN_NS1:-}
+POWERADMIN_NS2=${POWERADMIN_NS2:-}
+POWERADMIN_SESSION_KEY=${POWER_ADMIN:-`pwgen 32 1`}
 
 PDNS_ALLOW_AXFR_IPS=${PDNS_ALLOW_AXFR_IPS:-127.0.0.1}
 PDNS_MASTER=${PDNS_MASTER:-yes}
@@ -20,41 +22,62 @@ PDNS_DISTRIBUTOR_THREADS=${PDNS_DISTRIBUTOR_THREADS:-3}
 PDNS_RECURSIVE_CACHE_TTL=${PDNS_RECURSIVE_CACHE_TTL:-10}
 PDNS_ALLOW_RECURSION=${PDNS_ALLOW_RECURSION:-127.0.0.1}
 PDNS_RECURSOR=${PDNS_RECURSOR:-no}
-POWERADMIN_HOSTMASTER=${POWERADMIN_HOSTMASTER:-}
-POWERADMIN_NS1=${POWERADMIN_NS1:-}
-POWERADMIN_NS2=${POWERADMIN_NS2:-}
 
-# Setup run directory
-if [ ! -d /run/powerdns ]; then
-	mkdir -p /run/powerdns
-fi
-chown -R powerdns:powerdns /run/powerdns
-chmod 0755 /run/powerdns
 
-#Setup mysql env
+cp /usr/share/zoneinfo/${TZ} /etc/localtime; \
+ENV LANG ${POWERADMIN_IFACE_LANG}.UTF-8
+ENV LANGUAGE ${POWERADMIN_IFACE_LANG}.UTF-8
+ENV LC_ALL ${POWERADMIN_IFACE_LANG}.UTF-8
+ENV MUSL_LOCPATH /usr/share/i18n/locales/musl
 
-if [ -n "$MYSQL_HOST" ]; then
-    sed -i "s!MYSQL_HOST!${MYSQL_HOST}!" /etc/powerdns/conf.d/gmysql.conf
-	sed -i "s!{{MYSQL_HOST}}!${MYSQL_HOST}!" /var/www/html/poweradmin/inc/config.inc.php
-fi
-if [ -n "$MYSQL_PORT" ]; then
-    sed -i "s!MYSQL_PORT!${MYSQL_PORT}!" /etc/powerdns/conf.d/gmysql.conf
-	sed -i "s!{{MYSQL_PORT}}!${MYSQL_PORT}!" /var/www/html/poweradmin/inc/config.inc.php
-fi
-if [ -n "$MYSQL_DATABASE" ]; then
-    sed -i "s!MYSQL_DATABASE!${MYSQL_DATABASE}!" /etc/powerdns/conf.d/gmysql.conf
-	sed -i "s!{{MYSQL_DB}}!${MYSQL_DATABASE}!" /var/www/html/poweradmin/inc/config.inc.php
-fi
-if [ -n "$MYSQL_USER" ]; then
-    sed -i "s!MYSQL_USER!${MYSQL_USER}!" /etc/powerdns/conf.d/gmysql.conf
-	sed -i "s!{{MYSQL_USER}}!${MYSQL_USER}!" /var/www/html/poweradmin/inc/config.inc.php
-fi
-if [ -n "$MYSQL_PASSWORD" ]; then
-    sed -i "s!MYSQL_PASSWORD!${MYSQL_PASSWORD}!" /etc/powerdns/conf.d/gmysql.conf
-	sed -i "s!{{MYSQL_PASSWORD}}!${MYSQL_PASSWORD}!" /var/www/html/poweradmin/inc/config.inc.php
+sed -i "s!MYSQL_HOST!${MYSQL_HOST}!" /etc/powerdns/conf.d/gmysql.conf
+sed -i "s!MYSQL_PORT!${MYSQL_PORT}!" /etc/powerdns/conf.d/gmysql.conf
+sed -i "s!MYSQL_DATABASE!${MYSQL_DATABASE}!" /etc/powerdns/conf.d/gmysql.conf
+sed -i "s!MYSQL_USER!${MYSQL_USER}!" /etc/powerdns/conf.d/gmysql.conf
+sed -i "s!MYSQL_PASSWORD!${MYSQL_PASSWORD}!" /etc/powerdns/conf.d/gmysql.conf
+
+sed -i "s!MYSQL_HOST!${MYSQL_HOST}!" /var/www/html/poweradmin/inc/config.inc.php
+sed -i "s!MYSQL_PORT!${MYSQL_PORT}!" /var/www/html/poweradmin/inc/config.inc.php
+sed -i "s!MYSQL_DATABASE!${MYSQL_DATABASE}!" /var/www/html/poweradmin/inc/config.inc.php
+sed -i "s!MYSQL_USER!${MYSQL_USER}!" /var/www/html/poweradmin/inc/config.inc.php
+sed -i "s!MYSQL_PASSWORD!${MYSQL_PASSWORD}!" /var/www/html/poweradmin/inc/config.inc.php
+
+sed -i "s!POWERADMIN_SESSION_KEY!${POWERADMIN_SESSION_KEY}!" /var/www/html/poweradmin/inc/config.inc.php
+sed -i "s!POWERADMIN_IFACE_LANG!${POWERADMIN_IFACE_LANG}!" /var/www/html/poweradmin/inc/config.inc.php
+sed -i "s!POWERADMIN_HOSTMASTER!${POWERADMIN_HOSTMASTER}!" /var/www/html/poweradmin/inc/config.inc.php
+sed -i "s!POWERADMIN_NS1!${POWERADMIN_NS1}!" /var/www/html/poweradmin/inc/config.inc.php
+sed -i "s!POWERADMIN_NS2!${POWERADMIN_NS2}!" /var/www/html/poweradmin/inc/config.inc.php
+sed -i "s!TZ!${TZ}!" /var/www/html/poweradmin/inc/config.inc.php
+
+until nc -z ${MYSQL_HOST} ${MYSQL_PORT}; do
+    echo "$(date) - waiting for a response from mysql"
+    sleep 1
+done
+
+if mysql -h ${MYSQL_HOST} -u ${MYSQL_USER} -p${MYSQL_PASSWORD} "${MYSQL_DATABASE}" >/dev/null 2>&1 </dev/null
+then
+	echo "Database ${MYSQL_DATABASE} already exists"
+else
+	mysql -h ${MYSQL_HOST} -u ${MYSQL_USER} -p${MYSQL_PASSWORD} -e "CREATE DATABASE ${MYSQL_DATABASE}"
+	mysql -h ${MYSQL_HOST} -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE} < /sql/pdns_schema.sql
+	mysql -h ${MYSQL_HOST} -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE} < /sql/poweradmin.sql
 fi
 
-	sed -i "s!{{SESSION_KEY}}!${SESSION_KEY}!" /var/www/html/poweradmin/inc/config.inc.php
+CHECK_TABLE=`mysql -h ${MYSQL_HOST} -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE} -e "CHECK TABLE domains;" | grep "doesn't exist" | awk {'print $3'}`
+if [ ${CHECK_TABLE} == "Error" ]; then
+	mysql -h ${MYSQL_HOST} -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE} < /sql/pdns_schema.sql
+fi
+
+CHECK_TABLE=`mysql -h ${MYSQL_HOST} -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE} -e "CHECK TABLE users;" | grep "doesn't exist" | awk {'print $3'}`
+if [ ${CHECK_TABLE} == "Error" ]; then
+	mysql -h ${MYSQL_HOST} -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE} < /sql/poweradmin.sql
+fi
+rm -rf /sql
+
+# INSERT INTO users ( id, username, `password`, fullname, email, description, perm_templ, active, use_ldap )
+#	VALUES ( 1, 'admin', '21232f297a57a5a743894a0e4a801fc3', 'Administrator', 'admin@example.net', 'Administrator with full rights.', 1, 1, 0 );
+# INSERT INTO perm_templ ( id, name, descr ) VALUES ( 1, 'Administrator', 'Administrator template with full rights.' );
+
 
 # Setup web access
 if [ ! -f /etc/powerdns/conf.d/webserver.conf ] && [ -n "$POWERDNS_WEBSERVER_ALLOW_FROM" ]; then

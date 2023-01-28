@@ -1,20 +1,20 @@
 <?php
-$db_host = '{{MYSQL_HOST}}';
-$db_name = '{{MYSQL_DB}}';
-$db_user = '{{MYSQL_USER}}';
-$db_pass = '{{MYSQL_PASSWORD}}';
+$db_host = 'MYSQL_HOST';
+$db_name = 'MYSQL_DATABASE';
+$db_user = 'MYSQL_USER';
+$db_pass = 'MYSQL_PASSWORD';
 $db_type = 'mysql';
 
-$session_key = '{{SESSION_KEY}}';
+$session_key = 'POWERADMIN_SESSION_KEY';
 
-$iface_lang = 'en_EN';
+$iface_lang = 'POWERADMIN_IFACE_LANG';
 $iface_style = 'ignite'; 
 
-$dns_hostmaster = 'guest';
-$dns_ns1 = '8.8.8.8';
-$dns_ns2 = '8.8.4.4';
+$dns_hostmaster = 'POWERADMIN_HOSTMASTER';
+$dns_ns1 = 'POWERADMIN_NS1';
+$dns_ns2 = 'POWERADMIN_NS2';
 
-$timezone = 'Europe/Moscow';
+$timezone = 'TZ';
 
 $pdnssec_use = true;
 $pdnssec_debug = false;
