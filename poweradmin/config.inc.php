@@ -8,7 +8,7 @@ $db_type = 'mysql';
 $session_key = 'POWERADMIN_SESSION_KEY';
 
 $iface_lang = 'POWERADMIN_IFACE_LANG';
-$iface_style = 'ignite'; 
+$iface_style = 'ignite';
 
 $dns_hostmaster = 'POWERADMIN_HOSTMASTER';
 $dns_ns1 = 'POWERADMIN_NS1';
