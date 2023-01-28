@@ -22,4 +22,4 @@ $pdnssec_debug = false;
 $pdnssec_command = '/usr/bin/pdnsutil';
 
 $ignore_install_dir = false;
-#$display_stats = true;
+$display_stats = false;

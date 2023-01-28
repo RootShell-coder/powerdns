@@ -144,13 +144,27 @@ RUN set -eux; \
 	chown -R powerdns:powerdns /run/powerdns
 
 #bug source correction
-RUN set -eux;\
+RUN set -eux; \
 	# ERROR 1074 (42000) Column length too big (max = 21844); use BLOB or TEXT instead
 	sed -i "s!VARCHAR(64000) DEFAULT NULL!TEXT(64000) DEFAULT NULL!g" /sql/pdns_schema.sql; \
 	# BUGs Undefined constant id,error
 	patch /var/www/html/poweradmin/dnssec_add_key.php /var/www/html/poweradmin/inc/dnssec_add_key.diff; \
 	patch /var/www/html/poweradmin/dnssec_edit_key.php /var/www/html/poweradmin/inc/dnssec_edit_key.diff; \
 	rm -r /var/www/html/poweradmin/inc/dnssec_add_key.diff /var/www/html/poweradmin/inc/dnssec_edit_key.diff
+
+#clear source
+RUN set -eux; \
+	rm -rf /var/www/html/poweradmin/.git; \
+	rm -rf /var/www/html/poweradmin/migrations; \
+	rm -rf /var/www/html/poweradmin/sql; \
+	rm -rf /var/www/html/poweradmin/tests; \
+	rm -rf /var/www/html/poweradmin/vagrant; \
+	rm -r /var/www/html/poweradmin/.gitignore; \
+	rm -r /var/www/html/poweradmin/README.md; \
+	rm -r /var/www/html/poweradmin/VAGRANT.md; \
+	rm -r /var/www/html/poweradmin/Vagrantfile; \
+	rm -r /var/www/html/poweradmin/Dockerfile
+
 
 EXPOSE 53 8081 80
 EXPOSE 53/UDP

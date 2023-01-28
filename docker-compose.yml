@@ -33,6 +33,8 @@ services:
     networks:
       - powerdns
     environment:
+      - TZ=Europe/Moscow
+      
       - MYSQL_HOST=mariadb
       - MYSQL_DATABASE=pdns_db
       - MYSQL_USER=pdns_user
