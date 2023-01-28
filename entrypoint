@@ -9,6 +9,8 @@ MYSQL_USER=${MYSQL_USER:-pdns}
 MYSQL_PASSWORD=${MYSQL_PASSWORD:-pdns}
 
 POWERADMIN_IFACE_LANG=${POWERADMIN_IFACE_LANG:-en_EN}
+POWERADMIN_IFACE_STYLE=${POWERADMIN_IFACE_STYLE:-ignite}
+POWERADMIN_IFACE_INDEX=${POWERADMIN_IFACE_INDEX:-cards}
 POWERADMIN_HOSTMASTER=${POWERADMIN_HOSTMASTER:-}
 POWERADMIN_NS1=${POWERADMIN_NS1:-}
 POWERADMIN_NS2=${POWERADMIN_NS2:-}
@@ -24,11 +26,25 @@ PDNS_ALLOW_RECURSION=${PDNS_ALLOW_RECURSION:-127.0.0.1}
 PDNS_RECURSOR=${PDNS_RECURSOR:-no}
 
 
-cp /usr/share/zoneinfo/${TZ} /etc/localtime; \
-ENV LANG ${POWERADMIN_IFACE_LANG}.UTF-8
-ENV LANGUAGE ${POWERADMIN_IFACE_LANG}.UTF-8
-ENV LC_ALL ${POWERADMIN_IFACE_LANG}.UTF-8
-ENV MUSL_LOCPATH /usr/share/i18n/locales/musl
+cp /usr/share/zoneinfo/${TZ} /etc/localtime
+
+LANG=${POWERADMIN_IFACE_LANG}.UTF-8
+LANGUAGE=${POWERADMIN_IFACE_LANG}.UTF-8
+LC_ALL=${POWERADMIN_IFACE_LANG}.UTF-8
+MUSL_LOCPATH=/usr/share/i18n/locales/musl
+
+export LANG
+export LANGUAGE
+export LC_ALL
+export MUSL_LOCPATH
+
+#ERROR 1074 (42000) Column length too big (max = 21844); use BLOB or TEXT instead
+sed -i "s!VARCHAR(64000) DEFAULT NULL!TEXT(64000) DEFAULT NULL!g" /sql/pdns_schema.sql
+#BUG Ungefined constant
+sed -i "s!$this->redirect('dnssec.php', [id => $zone_id]);!$this->redirect('dnssec.php', ['id' => $zone_id]);!"
+
+sed -i "s!latin1!utf8mb4!g" /sql/pdns_schema.sql
+sed -i "s!latin1!utf8mb4!g" /sql/poweradmin.sql
 
 sed -i "s!MYSQL_HOST!${MYSQL_HOST}!" /etc/powerdns/conf.d/gmysql.conf
 sed -i "s!MYSQL_PORT!${MYSQL_PORT}!" /etc/powerdns/conf.d/gmysql.conf
@@ -44,6 +60,8 @@ sed -i "s!MYSQL_PASSWORD!${MYSQL_PASSWORD}!" /var/www/html/poweradmin/inc/config
 
 sed -i "s!POWERADMIN_SESSION_KEY!${POWERADMIN_SESSION_KEY}!" /var/www/html/poweradmin/inc/config.inc.php
 sed -i "s!POWERADMIN_IFACE_LANG!${POWERADMIN_IFACE_LANG}!" /var/www/html/poweradmin/inc/config.inc.php
+sed -i "s!POWERADMIN_IFACE_STYLE!${POWERADMIN_IFACE_STYLE}!" /var/www/html/poweradmin/inc/config.inc.php
+sed -i "s!POWERADMIN_IFACE_INDEX!${POWERADMIN_IFACE_INDEX}!" /var/www/html/poweradmin/inc/config.inc.php
 sed -i "s!POWERADMIN_HOSTMASTER!${POWERADMIN_HOSTMASTER}!" /var/www/html/poweradmin/inc/config.inc.php
 sed -i "s!POWERADMIN_NS1!${POWERADMIN_NS1}!" /var/www/html/poweradmin/inc/config.inc.php
 sed -i "s!POWERADMIN_NS2!${POWERADMIN_NS2}!" /var/www/html/poweradmin/inc/config.inc.php
@@ -63,45 +81,54 @@ else
 	mysql -h ${MYSQL_HOST} -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE} < /sql/poweradmin.sql
 fi
 
+echo "check powerdns database table"
 CHECK_TABLE=`mysql -h ${MYSQL_HOST} -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE} -e "CHECK TABLE domains;" | grep "doesn't exist" | awk {'print $3'}`
-if [ ${CHECK_TABLE} == "Error" ]; then
+if [ "${CHECK_TABLE}" == "Error" ]; then
+	echo "update tables powerdns schema"
 	mysql -h ${MYSQL_HOST} -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE} < /sql/pdns_schema.sql
 fi
 
+echo "check poweradmin database table"
 CHECK_TABLE=`mysql -h ${MYSQL_HOST} -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE} -e "CHECK TABLE users;" | grep "doesn't exist" | awk {'print $3'}`
-if [ ${CHECK_TABLE} == "Error" ]; then
+if [ "${CHECK_TABLE}" == "Error" ]; then
+	echo "update tables poweradmin schema"
 	mysql -h ${MYSQL_HOST} -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE} < /sql/poweradmin.sql
 fi
-rm -rf /sql
+#mysql -h ${MYSQL_HOST} -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE} < /sql/cascade.sql
+#rm -rf /sql
 
+#
+# bcrypt 12 (admin/admin)
+#
 # INSERT INTO users ( id, username, `password`, fullname, email, description, perm_templ, active, use_ldap )
-#	VALUES ( 1, 'admin', '21232f297a57a5a743894a0e4a801fc3', 'Administrator', 'admin@example.net', 'Administrator with full rights.', 1, 1, 0 );
+# VALUES ( 1, 'admin', '21232f297a57a5a743894a0e4a801fc3', 'Administrator', 'admin@example.net', 'Administrator with full rights.', 1, 1, 0 );
 # INSERT INTO perm_templ ( id, name, descr ) VALUES ( 1, 'Administrator', 'Administrator template with full rights.' );
+#
 
-
-# Setup web access
-if [ ! -f /etc/powerdns/conf.d/webserver.conf ] && [ -n "$POWERDNS_WEBSERVER_ALLOW_FROM" ]; then
-	# Check if we got a password
-	if [ -z "$POWERDNS_WEBSERVER_PASSWORD" ]; then
-		POWERDNS_WEBSERVER_PASSWORD=$(pwgen 16 1)
-		fdc_notice "PowerDNS webserver password: $POWERDNS_WEBSERVER_PASSWORD"
-	fi
-	# Check if we got a API key
-	if [ -z "$POWERDNS_API_KEY" ]; then
-		POWERDNS_API_KEY=$(pwgen 16 1)
-		fdc_notice "PowerDNS webserver API key: $POWERDNS_API_KEY"
-	fi
-
-	cat <<EOF > /etc/powerdns/conf.d/webserver.conf
-webserver = yes
-webserver-address = 0.0.0.0
-webserver-allow-from = $POWERDNS_WEBSERVER_ALLOW_FROM
-webserver-loglevel = normal
-webserver-password = $POWERDNS_WEBSERVER_PASSWORD
-webserver-port=8081
-api = yes
-api-key = $POWERDNS_API_KEY
-EOF
-fi
-
+#
+# # Setup web access
+# if [ ! -f /etc/powerdns/conf.d/webserver.conf ] && [ -n "$POWERDNS_WEBSERVER_ALLOW_FROM" ]; then
+# 	# Check if we got a password
+# 	if [ -z "$POWERDNS_WEBSERVER_PASSWORD" ]; then
+# 		POWERDNS_WEBSERVER_PASSWORD=$(pwgen 16 1)
+# 		fdc_notice "PowerDNS webserver password: $POWERDNS_WEBSERVER_PASSWORD"
+# 	fi
+# 	# Check if we got a API key
+# 	if [ -z "$POWERDNS_API_KEY" ]; then
+# 		POWERDNS_API_KEY=$(pwgen 16 1)
+# 		fdc_notice "PowerDNS webserver API key: $POWERDNS_API_KEY"
+# 	fi
+#
+# 	cat <<EOF > /etc/powerdns/conf.d/webserver.conf
+# webserver = yes
+# webserver-address = 0.0.0.0
+# webserver-allow-from = $POWERDNS_WEBSERVER_ALLOW_FROM
+# webserver-loglevel = normal
+# webserver-password = $POWERDNS_WEBSERVER_PASSWORD
+# webserver-port=8081
+# api = yes
+# api-key = $POWERDNS_API_KEY
+# EOF
+# fi
+#
 exec "$@"

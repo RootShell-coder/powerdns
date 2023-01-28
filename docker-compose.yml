@@ -47,10 +47,12 @@ services:
       - PDNS_ALLOW_RECURSION=127.0.0.1
       - PDNS_RECURSOR=no
 
-      - POWERADMIN_HOSTMASTER=admin@adm.net
+      - POWERADMIN_HOSTMASTER=email.admmin.soa
+      - POWERADMIN_IFACE_STYLE=spark
+      #- POWERADMIN_IFACE_INDEX=list
       - POWERADMIN_IFACE_LANG=ru_RU
-      - POWERADMIN_NS1=8.8.8.8
-      - POWERADMIN_NS2=8.8.4.4
+      - POWERADMIN_NS1=ns1.example.com
+      - POWERADMIN_NS2=ns2.example.com
     depends_on:
       - mariadb
     ports:

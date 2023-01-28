@@ -81,7 +81,6 @@ ENV LC_ALL ru_RU.UTF-8
 ENV MUSL_LOCPATH /usr/share/i18n/locales/musl
 
 RUN set -eux; \
-	true "PowerDNS and PowerAdmin requirements"; \
 	apk add --no-cache \
 	boost-libs \
 	geoip \
@@ -111,8 +110,7 @@ RUN set -eux; \
 	php81-mbstring \
 	php81-xml \
 	\
-	composer musl musl-utils musl-locales tzdata \
-	#bind-tools; \
+	composer musl musl-utils musl-locales tzdata patch; \
 	rm -f /var/cache/apk/*
 
 RUN set -eux; \
@@ -132,7 +130,6 @@ COPY php81 /etc/php81
 COPY poweradmin /var/www/html/poweradmin/inc
 COPY sql /sql
 
-
 RUN set -eux; \
 	addgroup -S powerdns 2>/dev/null; \
 	adduser -S -D -h /var/lib/powerdns -s /sbin/nologin -G powerdns -g powerdns powerdns 2>/dev/null; \
@@ -145,6 +142,15 @@ RUN set -eux; \
 	chown -R root:powerdns /etc/powerdns; \
 	chown -R nginx:nginx /var/www/html; \
 	chown -R powerdns:powerdns /run/powerdns
+
+#bug source correction
+RUN set -eux;\
+	# ERROR 1074 (42000) Column length too big (max = 21844); use BLOB or TEXT instead
+	sed -i "s!VARCHAR(64000) DEFAULT NULL!TEXT(64000) DEFAULT NULL!g" /sql/pdns_schema.sql; \
+	# BUGs Undefined constant id,error
+	patch /var/www/html/poweradmin/dnssec_add_key.php /var/www/html/poweradmin/inc/dnssec_add_key.diff; \
+	patch /var/www/html/poweradmin/dnssec_edit_key.php /var/www/html/poweradmin/inc/dnssec_edit_key.diff; \
+	rm -r /var/www/html/poweradmin/inc/dnssec_add_key.diff /var/www/html/poweradmin/inc/dnssec_edit_key.diff
 
 EXPOSE 53 8081 80
 EXPOSE 53/UDP
