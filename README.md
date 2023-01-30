@@ -49,7 +49,7 @@ services:
       - MYSQL_PASSWORD=pdns_pass
 
   powerdns:
-    image: powerdns:latest
+    image: rootshellcoder/powerdns:latest
     networks:
       - powerdns
     environment:
