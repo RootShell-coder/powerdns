@@ -2,12 +2,14 @@
 
 TZ=${TZ:-Europe/Moscow}
 
+#mysql
 MYSQL_HOST=${MYSQL_HOST:-localhost}
 MYSQL_PORT=${MYSQL_PORT:-3306}
 MYSQL_DATABASE=${MYSQL_DATABASE:-pdns}
 MYSQL_USER=${MYSQL_USER:-pdns}
 MYSQL_PASSWORD=${MYSQL_PASSWORD:-pdns}
 
+#poweradmin
 POWERADMIN_IFACE_LANG=${POWERADMIN_IFACE_LANG:-en_EN}
 POWERADMIN_IFACE_STYLE=${POWERADMIN_IFACE_STYLE:-ignite}
 POWERADMIN_IFACE_INDEX=${POWERADMIN_IFACE_INDEX:-cards}
@@ -16,15 +18,27 @@ POWERADMIN_NS1=${POWERADMIN_NS1:-}
 POWERADMIN_NS2=${POWERADMIN_NS2:-}
 POWERADMIN_SESSION_KEY=${POWER_ADMIN:-`pwgen 32 1`}
 
+#pdns
 PDNS_ALLOW_AXFR_IPS=${PDNS_ALLOW_AXFR_IPS:-127.0.0.1}
 PDNS_MASTER=${PDNS_MASTER:-yes}
 PDNS_SLAVE=${PDNS_SLAVE:-no}
 PDNS_CACHE_TTL=${PDNS_CACHE_TTL:-20}
 PDNS_DISTRIBUTOR_THREADS=${PDNS_DISTRIBUTOR_THREADS:-3}
+PDNS_ALLOW_DNSUPDATE_FROM=${PDNS_ALLOW_DNSUPDATE_FROM:-127.0.0.1}
+
+#pdns recursor
 PDNS_RECURSIVE_CACHE_TTL=${PDNS_RECURSIVE_CACHE_TTL:-10}
 PDNS_ALLOW_RECURSION=${PDNS_ALLOW_RECURSION:-127.0.0.1}
 PDNS_RECURSOR=${PDNS_RECURSOR:-no}
 
+#pdns webserver
+PDNS_WEBSERVER_ENABLE=${PDNS_WEBSERVER_ENABLE:-no}
+PDNS_WEBSERVER_IP=${PDNS_WEBSERVER_IP:-127.0.0.1}
+PDNS_WEBSERVER_ALLOW_FROM=${PDNS_WEBSERVER_ALLOW_FROM:-127.0.0.1}
+PDNS_WEBSERVER_PASSWORD=${PDNS_WEBSERVER_PASSWORD:-`pwgen 8 1`}
+PDNS_WEBSERVER_PORT=${PDNS_WEBSERVER_PORT:-8081}
+PDNS_WEBSERVER_API_ENABLE=${PDNS_WEBSERVER_API_ENABLE:-no}
+PDNS_WEBSERVER_API_KEY=${PDNS_WEBSERVER_API_KEY:-`pwgen 32 1`}
 
 cp /usr/share/zoneinfo/${TZ} /etc/localtime
 
@@ -38,20 +52,30 @@ export LANGUAGE
 export LC_ALL
 export MUSL_LOCPATH
 
-#ERROR 1074 (42000) Column length too big (max = 21844); use BLOB or TEXT instead
-sed -i "s!VARCHAR(64000) DEFAULT NULL!TEXT(64000) DEFAULT NULL!g" /sql/pdns_schema.sql
-#BUG Ungefined constant
-sed -i "s!$this->redirect('dnssec.php', [id => $zone_id]);!$this->redirect('dnssec.php', ['id' => $zone_id]);!"
-
-sed -i "s!latin1!utf8mb4!g" /sql/pdns_schema.sql
-sed -i "s!latin1!utf8mb4!g" /sql/poweradmin.sql
-
+#pdns mysql
 sed -i "s!MYSQL_HOST!${MYSQL_HOST}!" /etc/powerdns/conf.d/gmysql.conf
 sed -i "s!MYSQL_PORT!${MYSQL_PORT}!" /etc/powerdns/conf.d/gmysql.conf
 sed -i "s!MYSQL_DATABASE!${MYSQL_DATABASE}!" /etc/powerdns/conf.d/gmysql.conf
 sed -i "s!MYSQL_USER!${MYSQL_USER}!" /etc/powerdns/conf.d/gmysql.conf
 sed -i "s!MYSQL_PASSWORD!${MYSQL_PASSWORD}!" /etc/powerdns/conf.d/gmysql.conf
 
+#pdns webserver
+sed -i "s!PDNS_WEBSERVER_ENABLE!${PDNS_WEBSERVER_ENABLE}!" /etc/powerdns/conf.d/webserver.conf
+sed -i "s!PDNS_WEBSERVER_IP!${PDNS_WEBSERVER_IP}!" /etc/powerdns/conf.d/webserver.conf
+sed -i "s!PDNS_WEBSERVER_ALLOW_FROM!${PDNS_WEBSERVER_ALLOW_FROM}!" /etc/powerdns/conf.d/webserver.conf
+sed -i "s!PDNS_WEBSERVER_PASSWORD!${PDNS_WEBSERVER_PASSWORD}!" /etc/powerdns/conf.d/webserver.conf
+sed -i "s!PDNS_WEBSERVER_PORT!${PDNS_WEBSERVER_PORT}!" /etc/powerdns/conf.d/webserver.conf
+sed -i "s!PDNS_WEBSERVER_API_ENABLE!${PDNS_WEBSERVER_API_ENABLE}!" /etc/powerdns/conf.d/webserver.conf
+sed -i "s!PDNS_WEBSERVER_API_KEY!${PDNS_WEBSERVER_API_KEY}!" /etc/powerdns/conf.d/webserver.conf
+
+#pdns
+sed -i "s!PDNS_ALLOW_AXFR_IPS!${PDNS_ALLOW_AXFR_IPS}!" /etc/powerdns/conf.d/dns.conf
+sed -i "s!PDNS_MASTER!${PDNS_MASTER}!" /etc/powerdns/conf.d/dns.conf
+sed -i "s!PDNS_SLAVE!${PDNS_SLAVE}!" /etc/powerdns/conf.d/dns.conf
+sed -i "s!PDNS_CACHE_TTL!${PDNS_CACHE_TTL}!" /etc/powerdns/conf.d/dns.conf
+sed -i "s!PDNS_DISTRIBUTOR_THREADS!${PDNS_DISTRIBUTOR_THREADS}!" /etc/powerdns/conf.d/dns.conf
+
+#poweradmin
 sed -i "s!MYSQL_HOST!${MYSQL_HOST}!" /var/www/html/poweradmin/inc/config.inc.php
 sed -i "s!MYSQL_PORT!${MYSQL_PORT}!" /var/www/html/poweradmin/inc/config.inc.php
 sed -i "s!MYSQL_DATABASE!${MYSQL_DATABASE}!" /var/www/html/poweradmin/inc/config.inc.php
@@ -65,6 +89,8 @@ sed -i "s!POWERADMIN_IFACE_INDEX!${POWERADMIN_IFACE_INDEX}!" /var/www/html/power
 sed -i "s!POWERADMIN_HOSTMASTER!${POWERADMIN_HOSTMASTER}!" /var/www/html/poweradmin/inc/config.inc.php
 sed -i "s!POWERADMIN_NS1!${POWERADMIN_NS1}!" /var/www/html/poweradmin/inc/config.inc.php
 sed -i "s!POWERADMIN_NS2!${POWERADMIN_NS2}!" /var/www/html/poweradmin/inc/config.inc.php
+
+#other
 sed -i "s!TZ!${TZ}!" /var/www/html/poweradmin/inc/config.inc.php
 
 until nc -z ${MYSQL_HOST} ${MYSQL_PORT}; do
@@ -105,30 +131,9 @@ fi
 # INSERT INTO perm_templ ( id, name, descr ) VALUES ( 1, 'Administrator', 'Administrator template with full rights.' );
 #
 
-#
-# # Setup web access
-# if [ ! -f /etc/powerdns/conf.d/webserver.conf ] && [ -n "$POWERDNS_WEBSERVER_ALLOW_FROM" ]; then
-# 	# Check if we got a password
-# 	if [ -z "$POWERDNS_WEBSERVER_PASSWORD" ]; then
-# 		POWERDNS_WEBSERVER_PASSWORD=$(pwgen 16 1)
-# 		fdc_notice "PowerDNS webserver password: $POWERDNS_WEBSERVER_PASSWORD"
-# 	fi
-# 	# Check if we got a API key
-# 	if [ -z "$POWERDNS_API_KEY" ]; then
-# 		POWERDNS_API_KEY=$(pwgen 16 1)
-# 		fdc_notice "PowerDNS webserver API key: $POWERDNS_API_KEY"
-# 	fi
-#
-# 	cat <<EOF > /etc/powerdns/conf.d/webserver.conf
-# webserver = yes
-# webserver-address = 0.0.0.0
-# webserver-allow-from = $POWERDNS_WEBSERVER_ALLOW_FROM
-# webserver-loglevel = normal
-# webserver-password = $POWERDNS_WEBSERVER_PASSWORD
-# webserver-port=8081
-# api = yes
-# api-key = $POWERDNS_API_KEY
-# EOF
-# fi
-#
+echo "*****"
+echo "POWERDNS WEBSERVER PASSWORD = "${PDNS_WEBSERVER_PASSWORD}
+echo "POWERDNS WEBSERVER API KEY = "${PDNS_WEBSERVER_API_KEY}
+echo "*****"
+
 exec "$@"

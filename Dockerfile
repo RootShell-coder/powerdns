@@ -110,7 +110,7 @@ RUN set -eux; \
 	php81-mbstring \
 	php81-xml \
 	\
-	composer musl musl-utils musl-locales tzdata patch; \
+	composer musl musl-utils musl-locales tzdata patch bind-tools; \
 	rm -f /var/cache/apk/*
 
 RUN set -eux; \
@@ -145,6 +145,8 @@ RUN set -eux; \
 
 #bug source correction
 RUN set -eux; \
+	sed -i "s!latin1!utf8mb4!g" /sql/pdns_schema.sql; \
+	sed -i "s!latin1!utf8mb4!g" /sql/poweradmin.sql; \
 	# ERROR 1074 (42000) Column length too big (max = 21844); use BLOB or TEXT instead
 	sed -i "s!VARCHAR(64000) DEFAULT NULL!TEXT(64000) DEFAULT NULL!g" /sql/pdns_schema.sql; \
 	# BUGs Undefined constant id,error
@@ -166,7 +168,7 @@ RUN set -eux; \
 	rm -r /var/www/html/poweradmin/Dockerfile
 
 
-EXPOSE 53 8081 80
+EXPOSE 53
 EXPOSE 53/UDP
 
 ENTRYPOINT [ "entrypoint" ]

@@ -34,24 +34,29 @@ services:
       - powerdns
     environment:
       - TZ=Europe/Moscow
-      
+
       - MYSQL_HOST=mariadb
       - MYSQL_DATABASE=pdns_db
       - MYSQL_USER=pdns_user
       - MYSQL_PASSWORD=pdns_pass
 
-      - PDNS_ALLOW_AXFR_IPS=127.0.0.1
+      - PDNS_ALLOW_AXFR_IPS=127.0.0.1/32, 172.17.0.1/32
       - PDNS_MASTER=yes
-      - PDNS_SLAVE=no
+      - PDNS_SLAVE=yes
       - PDNS_CACHE_TTL=20
       - PDNS_DISTRIBUTOR_THREADS=3
-      - PDNS_RECURSIVE_CACHE_TTL=10
-      - PDNS_ALLOW_RECURSION=127.0.0.1
-      - PDNS_RECURSOR=no
+      - PDNS_ALLOW_DNSUPDATE_FROM=127.0.0.1/32, 172.17.0.33/23
+
+      - PDNS_WEBSERVER_ENABLE=yes
+      - PDNS_WEBSERVER_IP=0.0.0.0
+      - PDNS_WEBSERVER_ALLOW_FROM=127.0.0.1/32, 172.17.0.1/32
+      - PDNS_WEBSERVER_PASSWORD=adminpass
+      - PDNS_WEBSERVER_PORT=8080
+      - PDNS_WEBSERVER_API_ENABLE=no
+      - PDNS_WEBSERVER_API_KEY=adminapikey
 
       - POWERADMIN_HOSTMASTER=email.admmin.soa
       - POWERADMIN_IFACE_STYLE=spark
-      #- POWERADMIN_IFACE_INDEX=list
       - POWERADMIN_IFACE_LANG=ru_RU
       - POWERADMIN_NS1=ns1.example.com
       - POWERADMIN_NS2=ns2.example.com
@@ -59,6 +64,6 @@ services:
       - mariadb
     ports:
       - 80:80/TCP
-      - 8081:8081/TCP
-      - 8053:53/TCP
-      - 8053:53/UDP
+      - 8080:8080/TCP
+      - 53:53/TCP
+      - 53:53/UDP
