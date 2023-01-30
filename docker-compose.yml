@@ -1,0 +1,69 @@
+version: '3.9'
+
+networks:
+  powerdns:
+    name: powerdns
+    driver: bridge
+#    driver_opts:
+#     com.docker.network.enable_ipv6: "true"
+#    ipam:
+#      driver: default
+#      config:
+#        - subnet: 172.16.238.0/24
+#          gateway: 172.16.238.1
+#        - subnet: "2001:3984:3989::/64"
+#          gateway: "2001:3984:3989::1"
+
+services:
+
+  mariadb:
+    image: mariadb
+    volumes:
+      - ./mysqldb:/var/lib/mysql
+    networks:
+      - powerdns
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_pass
+      - MYSQL_DATABASE=pdns_db
+      - MYSQL_USER=pdns_user
+      - MYSQL_PASSWORD=pdns_pass
+
+  powerdns:
+    image: powerdns:latest
+    networks:
+      - powerdns
+    environment:
+      - TZ=Europe/Moscow
+
+      - MYSQL_HOST=mariadb
+      - MYSQL_DATABASE=pdns_db
+      - MYSQL_USER=pdns_user
+      - MYSQL_PASSWORD=pdns_pass
+
+      - PDNS_ALLOW_AXFR_IPS=127.0.0.1/32, 172.17.0.1/32
+      - PDNS_MASTER=yes
+      - PDNS_SLAVE=yes
+      - PDNS_CACHE_TTL=20
+      - PDNS_DISTRIBUTOR_THREADS=3
+      - PDNS_ALLOW_DNSUPDATE_FROM=127.0.0.1/32, 172.17.0.33/23
+
+      - PDNS_WEBSERVER_ENABLE=yes
+      - PDNS_WEBSERVER_IP=0.0.0.0
+      - PDNS_WEBSERVER_ALLOW_FROM=127.0.0.1/32, 172.17.0.1/32
+      - PDNS_WEBSERVER_PASSWORD=adminpass
+      - PDNS_WEBSERVER_PORT=8080
+      - PDNS_WEBSERVER_API_ENABLE=no
+      - PDNS_WEBSERVER_API_KEY=adminapikey
+
+      - POWERADMIN_HOSTMASTER=email.admmin.soa
+      - POWERADMIN_IFACE_STYLE=spark
+      - POWERADMIN_IFACE_LANG=ru_RU
+      - POWERADMIN_NS1=ns1.example.com
+      - POWERADMIN_NS2=ns2.example.com
+    depends_on:
+      - mariadb
+    ports:
+      - 80:80/TCP
+      - 8080:8080/TCP
+      - 53:53/TCP
+      - 53:53/UDP
