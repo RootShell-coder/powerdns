@@ -94,5 +94,4 @@ services:
 
 
 
-enable dnssec in poweradmin
-![DNSSEC](./nfo/dnssec.png)
+
