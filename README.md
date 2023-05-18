@@ -92,6 +92,7 @@ services:
 
 `docker compose up -d`
 
-
+http://your_ip_address_or_domain/poweradmin
+username/password admin admin
 
 
