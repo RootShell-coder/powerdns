@@ -8,7 +8,7 @@ on:
 
 env:
   IMAGE_NAME: "powerdns"
-  VERSION: "latest"
+  VERSION: "test"
 jobs:
   push:
     name: Build and push to Docker Hub

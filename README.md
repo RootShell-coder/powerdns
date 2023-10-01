@@ -61,6 +61,7 @@ services:
       - MYSQL_PASSWORD=pdns_pass
 
       - PDNS_ALLOW_AXFR_IPS=127.0.0.1/32, 172.17.0.1/32
+      - PDNS_LOCAL_ADDRESS=0.0.0.0
       - PDNS_MASTER=yes
       - PDNS_SLAVE=yes
       - PDNS_CACHE_TTL=20
@@ -94,5 +95,3 @@ services:
 
 http://your_ip_address_or_domain/poweradmin
 username/password admin admin
-
-

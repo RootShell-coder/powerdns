@@ -20,6 +20,7 @@ POWERADMIN_SESSION_KEY=${POWER_ADMIN:-`pwgen 32 1`}
 
 #pdns
 PDNS_ALLOW_AXFR_IPS=${PDNS_ALLOW_AXFR_IPS:-127.0.0.1}
+PDNS_LOCAL_ADDRESS=${PDNS_LOCAL_ADDRESS:-0.0.0.0, ::}
 PDNS_MASTER=${PDNS_MASTER:-yes}
 PDNS_SLAVE=${PDNS_SLAVE:-no}
 PDNS_CACHE_TTL=${PDNS_CACHE_TTL:-20}
@@ -70,10 +71,12 @@ sed -i "s!PDNS_WEBSERVER_API_KEY!${PDNS_WEBSERVER_API_KEY}!" /etc/powerdns/conf.
 
 #pdns
 sed -i "s!PDNS_ALLOW_AXFR_IPS!${PDNS_ALLOW_AXFR_IPS}!" /etc/powerdns/conf.d/dns.conf
+sed -i "s!PDNS_LOCAL_ADDRESS!${PDNS_LOCAL_ADDRESS}!" /etc/powerdns/conf.d/dns.conf
 sed -i "s!PDNS_MASTER!${PDNS_MASTER}!" /etc/powerdns/conf.d/dns.conf
 sed -i "s!PDNS_SLAVE!${PDNS_SLAVE}!" /etc/powerdns/conf.d/dns.conf
 sed -i "s!PDNS_CACHE_TTL!${PDNS_CACHE_TTL}!" /etc/powerdns/conf.d/dns.conf
 sed -i "s!PDNS_DISTRIBUTOR_THREADS!${PDNS_DISTRIBUTOR_THREADS}!" /etc/powerdns/conf.d/dns.conf
+sed -i "s!PDNS_ALLOW_DNSUPDATE_FROM!${PDNS_ALLOW_DNSUPDATE_FROM}!" /etc/powerdns/conf.d/dns.conf
 
 #poweradmin
 sed -i "s!MYSQL_HOST!${MYSQL_HOST}!" /var/www/html/poweradmin/inc/config.inc.php
