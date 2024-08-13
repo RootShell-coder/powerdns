@@ -27,8 +27,7 @@ In addition, the PowerDNS Authoritative Server is the leading DNSSEC implementat
 docker-compose.yml _for a quick start, this simple yml file is enough_
 
 ```yaml
-version: '3.9'
-
+---
 networks:
   powerdns:
     name: powerdns
@@ -49,7 +48,7 @@ services:
       - MYSQL_PASSWORD=pdns_pass
 
   powerdns:
-    image: rootshellcoder/powerdns:latest
+    image: ghcr.io/rootshell-coder/powerdns:latest
     networks:
       - powerdns
     environment:

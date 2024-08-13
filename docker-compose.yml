@@ -1,5 +1,4 @@
-version: '3.9'
-
+---
 networks:
   powerdns:
     name: powerdns
@@ -29,7 +28,7 @@ services:
       - MYSQL_PASSWORD=pdns_pass
 
   powerdns:
-    image: rootshellcoder/powerdns:latest
+    image: ghcr.io/rootshell-coder/powerdns:latest
     networks:
       - powerdns
     environment:
