@@ -1,5 +1,5 @@
 # PDNS ----------------------------------------------------------------------------------
-FROM alpine:3.18 AS pdns_authoritive
+FROM alpine:3.22 AS pdns_authoritive
 
 ENV POWERDNS_VER=4.9.9
 
