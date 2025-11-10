@@ -1,8 +1,0 @@
-92c92
-<                 $this->redirect('dnssec.php', [id => $zone_id]);
----
->                 $this->redirect('dnssec.php', ['id' => $zone_id]);
-94c94
-<                 $this->setMessage('dnssec_add_key', error, _('Failed to add new DNSSEC key.'));
----
->                 $this->setMessage('dnssec_add_key', 'error', _('Failed to add new DNSSEC key.'));

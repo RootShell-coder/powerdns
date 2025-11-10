@@ -1,8 +1,0 @@
-84c84
-<                     $this->redirect('dnssec.php', [id => $zone_id]);
----
->                     $this->redirect('dnssec.php', ['id' => $zone_id]);
-89c89
-<                     $this->redirect('dnssec.php', [id => $zone_id]);
----
->                     $this->redirect('dnssec.php', ['id' => $zone_id]);
