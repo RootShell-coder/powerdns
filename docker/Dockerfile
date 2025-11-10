@@ -93,7 +93,7 @@ RUN apk update && \
     php83-pdo_sqlite php83-ldap php83-json php83-mbstring php83-dom \
     php83-session php83-curl php83-gd php83-opcache php83-fileinfo \
     php83-iconv php83-phar php83-ctype php83-posix php83-zip php83-zlib \
-    php83-tokenizer nginx wget libsodium luajit; \
+    php83-tokenizer nginx wget libsodium luajit mariadb-connector-c; \
     rm -f /var/cache/apk/*
 
 ADD https://github.com/just-containers/s6-overlay/releases/download/v3.1.6.2/s6-overlay-noarch.tar.xz /tmp
@@ -164,6 +164,14 @@ RUN printf '%s\n' \
 COPY --from=pdns_authoritive /build/powerdns-root /
 COPY --from=poweradmin /var/www/html /var/www/html
 COPY ./nginx /etc/nginx
+
+RUN printf '%s\n' \
+    'launch=gmysql' \
+    'gmysql-host=mariadb' \
+    'gmysql-user=pdns_user' \
+    'gmysql-password=pdns_pass' \
+    'gmysql-dbname=pdns_db' \
+    > /etc/powerdns/pdns.conf
 
 VOLUME ["/etc/nginx/", "/etc/powerdns/", "/var/www/html/poweradmin/"]
 
