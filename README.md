@@ -1,5 +1,7 @@
 # PowerDNS Authoritative Server
 
+[![powerdns](https://github.com/RootShell-coder/powerdns/actions/workflows/docker.yml/badge.svg?branch=master)](https://github.com/RootShell-coder/powerdns/actions/workflows/docker.yml)
+
 This is an all-in-one Docker image that includes PHP-FPM, Nginx, PowerAdmin (web interface), and PowerDNS Authoritative Server.
 
 - PowerDNS v 4.9.9
