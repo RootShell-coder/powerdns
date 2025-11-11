@@ -1,4 +1,4 @@
-# PDNS ----------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------
 FROM alpine:3.22 AS pdns_authoritive
 
 ENV POWERDNS_VER=4.9.9
@@ -81,7 +81,6 @@ RUN set -eux; \
   wget https://github.com/poweradmin/poweradmin/archive/refs/tags/v${POWERADMIN_VER}.tar.gz; \
   tar -xf v${POWERADMIN_VER}.tar.gz && rm -f v${POWERADMIN_VER}.tar.gz; \
   mv poweradmin-${POWERADMIN_VER} poweradmin;
-  # rm -rf /var/www/html/poweradmin/install
 
 # ---------------------------------------------------------------------------------------
 FROM alpine:3.22
@@ -102,6 +101,11 @@ ADD https://github.com/just-containers/s6-overlay/releases/download/v3.1.6.2/s6-
 RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
 RUN rm -rf /tmp/*
 
+COPY --from=pdns_authoritive /build/powerdns-root /
+COPY --from=poweradmin /var/www/html /var/www/html
+COPY ./nginx /etc/nginx
+COPY ./entrypoint /usr/bin
+
 RUN mkdir -p /etc/services.d/pdns /etc/services.d/nginx /etc/services.d/php-fpm && \
     printf '%s\n' \
     '#!/bin/sh' \
@@ -118,7 +122,8 @@ RUN mkdir -p /etc/services.d/pdns /etc/services.d/nginx /etc/services.d/php-fpm 
 
 RUN ln -sf /usr/bin/php83 /usr/bin/php && \
     ln -sf /usr/sbin/php-fpm83 /usr/sbin/php-fpm && \
-    ln -sf /etc/php83 /etc/php
+    ln -sf /etc/php83 /etc/php && \
+    chmod +x /usr/bin/entrypoint
 
 RUN mkdir -p /var/log/php83 /run/php
 
@@ -161,10 +166,6 @@ RUN printf '%s\n' \
     'opcache.revalidate_freq=60' \
     > /etc/php/conf.d/99-custom.ini
 
-COPY --from=pdns_authoritive /build/powerdns-root /
-COPY --from=poweradmin /var/www/html /var/www/html
-COPY ./nginx /etc/nginx
-
 RUN printf '%s\n' \
     'launch=gmysql' \
     'gmysql-host=mariadb' \
@@ -177,4 +178,4 @@ VOLUME ["/etc/nginx/", "/etc/powerdns/", "/var/www/html/poweradmin/"]
 
 WORKDIR /var/www/html
 EXPOSE 53 80
-CMD ["/init"]
+ENTRYPOINT ["entrypoint"]

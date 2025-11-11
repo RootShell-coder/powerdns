@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: powerdns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: powerdns
+  template:
+    metadata:
+      labels:
+        app: powerdns
+    spec:
+      containers:
+      - name: powerdns
+        image: ghcr.io/rootshell-coder/powerdns:4.0.4
+        env:
+        - name: PDNS_CONF
+          valueFrom:
+            configMapKeyRef:
+              name: powerdns-config
+              key: pdns.conf
+        ports:
+        - containerPort: 53
+          hostPort: 53
+          protocol: TCP
+        - containerPort: 53
+          hostPort: 53
+          protocol: UDP
+        - containerPort: 80
+          protocol: TCP
+        volumeMounts:
+        - name: poweradmin-storage
+          mountPath: /var/www/html/poweradmin/
+      volumes:
+      - name: poweradmin-storage
+        persistentVolumeClaim:
+          claimName: poweradmin-pvc

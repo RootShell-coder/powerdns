@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if [ -n "$PDNS_CONF" ]; then
+    echo "$PDNS_CONF" > /etc/powerdns/pdns.conf
+fi
+
+exec /init

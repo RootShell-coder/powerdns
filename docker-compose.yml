@@ -1,18 +1,14 @@
 ---
 networks:
-  mariadb:
-    name: mariadb
+  mariadb-net:
+    name: mariadb-net
     attachable: true
-  powerdns:
-    name: powerdns
+  powerdns-net:
+    name: powerdns-net
 
 volumes:
   mysqldb:
     name: mysqldb
-  nginx:
-    name: nginx
-  powerdns:
-    name: powerdns
   poweradmin:
     name: poweradmin
 
@@ -32,12 +28,24 @@ services:
   powerdns:
     image: ghcr.io/rootshell-coder/powerdns:4.0.4
     volumes:
-      - nginx:/etc/nginx/
-      - powerdns:/etc/powerdns/
       - poweradmin:/var/www/html/poweradmin/
+    environment:
+      PDNS_CONF: |
+        launch=gmysql
+        gmysql-host=mariadb
+        gmysql-port=3306
+        gmysql-dbname=pdns_db
+        gmysql-user=pdns_user
+        gmysql-password=pdns_pass
+        gmysql-dnssec=yes
+        allow-axfr-ips=127.0.0.1,::1
+        local-address=0.0.0.0
+        primary=no
+        secondary=no
+        allow-dnsupdate-from=127.0.0.1,::1
     networks:
-      - mariadb
-      - powerdns
+      - mariadb-net
+      - powerdns-net
     ports:
       - 80:80/TCP
       - 53:53/TCP
